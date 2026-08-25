@@ -1,0 +1,33 @@
+name: CI
+
+# Runs on every push and PR. Needs no GCP access at all, so it goes green
+# before any of the cloud setup exists.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build
+        run: mvn -B package
+
+      # Boots the jar and checks it reports the version it was given. Cheap, but it
+      # catches the failure that matters most here: a pod that starts but misreports
+      # its version makes every routing result untrustworthy.
+      - name: Smoke test
+        run: |
+          APP_VERSION=ci-check java -jar target/*.jar --server.port=8080 &
+          for i in $(seq 1 30); do curl -sf localhost:8080/health >/dev/null && break; sleep 2; done
+          curl -sf localhost:8080/health | tee /dev/stderr | grep -q '"version":"ci-check"'
+          curl -sf -D- -o/dev/null localhost:8080/health | grep -qi 'x-bag-xapi-version: ci-check'
