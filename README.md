@@ -1,11 +1,11 @@
 # bag-xapi
 
-Orchestration layer of the [cookie-based per-layer version routing POC](../bag-ui/README.md).
+Orchestration layer of the [cookie-based per-layer version routing POC](https://github.com/asharma157/bag-ui).
 Java 17 / Spring Boot. Exposes `GET /api/bags`, calls `bag-service`, applies totals and
 promotions on top of what the backend returns.
 
 **The full POC — the cookie model, the mesh routing, local validation, GKE deployment and the
-demo script — is documented in the [bag-ui](../bag-ui/README.md) repo.** This README covers only
+demo script — is documented in the [bag-ui](https://github.com/asharma157/bag-ui) repo.** This README covers only
 what is specific to this service.
 
 ## Its version is selected by the `bag_orch` cookie
