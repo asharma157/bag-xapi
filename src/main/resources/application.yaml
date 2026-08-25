@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  tomcat:
+    connection-timeout: 20s
+
+bag:
+  layer: bag-xapi
+  # Fed by the downward API from the pod's `version` label in Kubernetes.
+  version: ${APP_VERSION:2.2}
+  instance: ${POD_NAME:${HOSTNAME:local}}
+  downstream:
+    # CONSTANT and version-agnostic. One Kubernetes Service fronts every bag-service version;
+    # the sidecar picks the subset from the propagated bag_service cookie. The env override exists
+    # only so the app can run outside a cluster, never to select a version.
+    base-url: ${BAG_SERVICE_URL:http://bag-service:8080}
+
+logging:
+  level:
+    root: INFO

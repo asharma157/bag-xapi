@@ -1,0 +1,4 @@
+target/
+k8s/
+*.md
+.git/

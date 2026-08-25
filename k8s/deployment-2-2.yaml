@@ -1,0 +1,71 @@
+# bag-xapi 2.2 — the version currently taking 100% of default (unpinned) traffic
+#
+# One Deployment per version. The pod's `version` label is the single source of truth:
+# Istio's DestinationRule builds its subsets from it, and the downward API feeds the same value
+# into APP_VERSION so the app reports exactly the version it was scheduled as.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bag-xapi-2-2
+  namespace: bag
+  labels:
+    app: bag-xapi
+    version: "2.2"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bag-xapi
+      version: "2.2"
+  template:
+    metadata:
+      labels:
+        app: bag-xapi
+        version: "2.2"
+    spec:
+      # GKE Spot VMs are tainted when node auto-provisioning applies the taint; harmless otherwise.
+      tolerations:
+        - key: cloud.google.com/gke-spot
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      containers:
+        - name: bag-xapi
+          image: us-central1-docker.pkg.dev/PROJECT_ID/bag-poc/bag-xapi:2.2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: APP_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['version']
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 40
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 320Mi
+            limits:
+              memory: 640Mi
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
